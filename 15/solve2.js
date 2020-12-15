@@ -1,53 +1,31 @@
 const fs = require('fs');
 const inputString = fs.readFileSync(process.argv[2], 'utf-8').trim().split('\n');
 
-const max = 30000001;
-
-const memory = {};
-let lastSpoken;
+const max = 30000000;
 
 main(inputString);
 
-function say(number, turn) {
-  // console.log('say', turn, number);
-  const prev = memory[number] || {};
-  memory[number] = {
-    prevTurn: prev.lastTurn,
-    lastTurn: turn,
-    times: prev.times + 1 || 1,
-  };
-  lastSpoken = number;
-}
-
-function variantDumb(arr) {
+function variantLessDumb(arr) {
   const parsed = arr[0].split(',');
 
-  parsed.forEach((num, i) => say(parseInt(num, 10), i + 1));
+  const memory = new Array(max); // replacing this with an object slows everything down x1000 times
 
-  let turn = parsed.length + 1;
+  parsed.forEach((num, i) => (memory[num] = i + 1));
 
-  while (turn < max) {
-    const lastNumber = memory[lastSpoken];
+  // first turn is always 0
+  let lastSpoken = 0;
 
-    // if (turn % 10000 === 0) {
-    //   console.log('turn', turn);
-    // }
-
-    if (lastNumber.times === 1) {
-      say(0, turn);
-    } else if (lastNumber.times > 1) {
-      const diff = lastNumber.lastTurn - lastNumber.prevTurn;
-      say(diff, turn);
-    }
-
-    turn += 1;
+  for (let turn = parsed.length + 2; turn < max + 1; turn++) {
+    const lastSpokenPreviousTurn = memory[lastSpoken];
+    memory[lastSpoken] = turn - 1;
+    lastSpoken = lastSpokenPreviousTurn ? turn - 1 - lastSpokenPreviousTurn : 0;
   }
 
   return lastSpoken;
 }
 
 function solve(inputString) {
-  return variantDumb(inputString);
+  return variantLessDumb(inputString);
 }
 
 function main(inputString) {
