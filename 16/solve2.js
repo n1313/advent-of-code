@@ -1,188 +1,90 @@
 const fs = require('fs');
-const inputString = fs.readFileSync(process.argv[2], 'utf-8').trim().split('\n');
+const inputString = fs.readFileSync(process.argv[2], 'utf-8').trim();
 
 main(inputString);
 
-function parse(arr) {
+function parse(inputString) {
+  // thanks @atarka!
+  const [, rules, my, nearby] = inputString.match(
+    /(.+?)\r?\n\r?\nyour ticket:\r?\n(.+?)\r?\n\r?\nnearby tickets:\r?\n(.+)/s
+  );
+
   const result = {
     rules: {},
-    my: null,
-    nearby: [],
+    my: my.split(','),
+    nearby: nearby.split('\n').map((ticket) => ticket.split(',')),
   };
 
-  let section = 0;
-
-  arr.forEach((line) => {
-    if (!line) {
-      return;
-    }
-
-    if (line === 'your ticket:' || line === 'nearby tickets:') {
-      section += 1;
-      return;
-    }
-
-    if (section === 0) {
-      const [rule, values] = line.split(': ');
-      result.rules[rule] = result.rules[rule] || [];
-
-      const intervals = values.split(' or ');
-      intervals.forEach((interval) => {
-        const [from, to] = interval.split('-');
-        result.rules[rule].push([parseInt(from, 10), parseInt(to, 10)]);
-      });
-    } else {
-      const commas = line.split(',').map((x) => parseInt(x, 10));
-      if (section === 1) {
-        result.my = commas;
-      } else {
-        result.nearby.push(commas);
+  rules.split('\n').forEach((line) => {
+    const [fieldName, intervals] = line.split(': ');
+    intervals.split(' or ').forEach((interval) => {
+      const [from, to] = interval.split('-');
+      // thanks again @atarka!
+      for (let val = parseInt(from, 10); val <= parseInt(to, 10); val++) {
+        result.rules[val] = result.rules[val] || [];
+        result.rules[val].push(fieldName);
       }
-    }
+    });
   });
 
   return result;
 }
 
 function validate(rules, tickets) {
-  const validTickets = [];
-
-  const flatRules = [];
-  Object.values(rules).forEach((rule) => {
-    rule.forEach((r) => flatRules.push(r));
-  });
-
-  tickets.forEach((ticket) => {
-    let validFields = 0;
-    ticket.forEach((field) => {
-      let failures = 0;
-      flatRules.forEach(([from, to]) => {
-        if (field > to || field < from) {
-          failures += 1;
-        }
-      });
-      if (failures < flatRules.length) {
-        validFields += 1;
-      }
-    });
-    if (validFields === ticket.length) {
-      validTickets.push(ticket);
-    }
-  });
-
+  const validTickets = tickets.filter((ticket) => ticket.every((pos) => Boolean(rules[pos])));
   return validTickets;
 }
 
-function findFields(rules, tickets) {
-  const fields = {};
+function findPositions(rules, tickets) {
+  const positions = {};
 
-  const fieldsLength = tickets[0].length;
-
-  Object.entries(rules).forEach(([fieldName, rules]) => {
-    fields[fieldName] = [];
-
-    for (let f = 0; f < fieldsLength; f += 1) {
-      const fieldValues = tickets.map((ticket) => ticket[f]);
-
-      if (
-        fieldValues.every((value) => {
-          const hasMatchingRule = rules.find(([from, to]) => {
-            return value >= from && value <= to;
-          });
-          return Boolean(hasMatchingRule);
-        })
-      ) {
-        fields[fieldName].push(f);
+  tickets.forEach((ticket) => {
+    ticket.forEach((val, pos) => {
+      const possibilities = rules[val];
+      if (!positions[pos]) {
+        positions[pos] = possibilities;
+      } else {
+        positions[pos] = positions[pos].filter((fieldName) => possibilities.includes(fieldName));
       }
-    }
+    });
   });
 
-  return fields;
+  return positions;
 }
 
-function narrowDown(fields) {
-  const fieldsMap = { ...fields };
+function narrowDown(possiblePositions) {
+  const finalPositions = {};
+  const positionsCount = Object.keys(possiblePositions).length;
 
-  const valuesMap = {};
-  Object.entries(fieldsMap).forEach(([fieldName, value]) => {
-    value.forEach((v) => {
-      valuesMap[v] = valuesMap[v] || [];
-      valuesMap[v].push(fieldName);
+  while (Object.keys(finalPositions).length < positionsCount) {
+    const [position, [fieldName]] = Object.entries(possiblePositions).find(([position, fields]) => fields.length === 1);
+
+    finalPositions[parseInt(position, 10)] = fieldName;
+
+    Object.entries(possiblePositions).forEach(([position, fields]) => {
+      possiblePositions[position] = fields.filter((f) => f !== fieldName);
     });
-  });
-
-  const finalFields = {};
-
-  while (Object.keys(fieldsMap).length > 0) {
-    const foundFieldWithOnePossibleValue = Object.entries(fieldsMap).find((entry) => {
-      return entry[1].length === 1;
-    });
-
-    if (foundFieldWithOnePossibleValue) {
-      const [fieldName, known] = foundFieldWithOnePossibleValue;
-      const knownValue = +known[0];
-
-      finalFields[fieldName] = knownValue;
-      console.log(fieldName, 'is', knownValue);
-
-      Object.entries(fieldsMap).forEach(([fieldName, value]) => {
-        const idx = value.indexOf(knownValue);
-        fieldsMap[fieldName].splice(idx, 1);
-      });
-
-      delete fieldsMap[fieldName];
-      delete valuesMap[knownValue];
-    } else {
-      const foundValueWithOnePossibleField = Object.entries(valuesMap).find((entry) => {
-        return entry[1].length === 1;
-      });
-
-      if (!foundValueWithOnePossibleField) {
-        console.log('fieldsMap', fieldsMap);
-        console.log('valuesMap', valuesMap);
-        console.log('finalFields', finalFields);
-        throw new Error('out of ideas');
-      }
-
-      const [known, fieldName] = foundValueWithOnePossibleField;
-      const knownValue = +known;
-      const knownField = String(fieldName[0]);
-
-      finalFields[knownField] = knownValue;
-      console.log(knownField, 'is', knownValue);
-
-      Object.entries(valuesMap).forEach(([value, fieldName]) => {
-        const idx = fieldName.indexOf(knownField);
-        valuesMap[value].splice(idx, 1);
-      });
-
-      delete fieldsMap[knownField];
-      delete valuesMap[knownValue];
-    }
   }
 
-  return finalFields;
+  return finalPositions;
 }
 
-function variantDumb(arr) {
-  const parsed = parse(arr);
+function variantDumb(inputString) {
+  const parsed = parse(inputString);
 
   parsed.nearby = validate(parsed.rules, parsed.nearby);
 
-  const possibleFields = findFields(parsed.rules, [parsed.my, ...parsed.nearby]);
+  const possiblePositions = findPositions(parsed.rules, [parsed.my, ...parsed.nearby]);
 
-  const finalFields = narrowDown(possibleFields);
+  const finalPositions = narrowDown(possiblePositions);
 
-  const departures = Object.entries(finalFields).filter(([fieldName]) => {
-    return fieldName.startsWith('departure');
-  });
-
-  const result = departures
-    .map(([fieldName, fieldIndex]) => {
-      console.log('my', fieldName, 'is', parsed.my[fieldIndex]);
-      return parsed.my[fieldIndex];
+  const result = Object.entries(finalPositions)
+    .filter(([position, fieldName]) => fieldName.startsWith('departure'))
+    .map(([position, fieldName]) => {
+      console.log('my', fieldName, 'is', parsed.my[position]);
+      return parsed.my[position];
     })
-    .reduce((a, b) => (a *= b), 1);
+    .reduce((a, val) => (a *= val), 1);
 
   return result;
 }

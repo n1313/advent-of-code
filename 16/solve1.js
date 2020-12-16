@@ -1,42 +1,30 @@
 const fs = require('fs');
-const inputString = fs.readFileSync(process.argv[2], 'utf-8').trim().split('\n');
+const inputString = fs.readFileSync(process.argv[2], 'utf-8').trim();
 
 main(inputString);
 
-function parse(arr) {
+function parse(inputString) {
+  // thanks @atarka!
+  const [, rules, my, nearby] = inputString.match(
+    /(.+?)\r?\n\r?\nyour ticket:\r?\n(.+?)\r?\n\r?\nnearby tickets:\r?\n(.+)/s
+  );
+
   const result = {
-    rules: [],
-    my: [],
-    nearby: [],
+    rules: {},
+    my: my.split(','),
+    nearby: nearby.split('\n').map((ticket) => ticket.split(',')),
   };
 
-  let section = 0;
-
-  arr.forEach((line) => {
-    if (!line) {
-      return;
-    }
-
-    if (line === 'your ticket:' || line === 'nearby tickets:') {
-      section += 1;
-      return;
-    }
-
-    if (section === 0) {
-      const [rule, values] = line.split(': ');
-      const intervals = values.split(' or ');
-      intervals.forEach((interval) => {
-        const [from, to] = interval.split('-');
-        result.rules.push([parseInt(from, 10), parseInt(to, 10)]);
-      });
-    } else {
-      const commas = line.split(',').map((x) => parseInt(x, 10));
-      if (section === 1) {
-        result.my = commas;
-      } else {
-        result.nearby.push(commas);
+  rules.split('\n').forEach((line) => {
+    const [fieldName, intervals] = line.split(': ');
+    intervals.split(' or ').forEach((interval) => {
+      const [from, to] = interval.split('-');
+      // thanks again @atarka!
+      for (let val = parseInt(from, 10); val <= parseInt(to, 10); val++) {
+        result.rules[val] = result.rules[val] || [];
+        result.rules[val].push(fieldName);
       }
-    }
+    });
   });
 
   return result;
@@ -45,30 +33,24 @@ function parse(arr) {
 function findErrors(rules, tickets) {
   const errors = [];
 
-  tickets.forEach((fields) => {
-    fields.forEach((field) => {
-      let failures = 0;
-      rules.forEach(([from, to]) => {
-        if (field > to || field < from) {
-          failures += 1;
-        }
-      });
-      if (failures === rules.length) {
-        errors.push(field);
-        console.log('invalid', fields[0], fields[1]);
-      }
+  tickets.forEach((ticket) => {
+    const error = ticket.find((value) => {
+      return !Boolean(rules[value]);
     });
+    if (error) {
+      errors.push(error);
+    }
   });
 
   return errors;
 }
 
-function variantDumb(arr) {
-  const parsed = parse(arr);
+function variantDumb(inputString) {
+  const parsed = parse(inputString);
 
   const errors = findErrors(parsed.rules, parsed.nearby);
 
-  return errors.reduce((a, b) => (a += b), 0);
+  return errors.reduce((a, v) => (a += parseInt(v, 10)), 0);
 }
 
 function solve(inputString) {
