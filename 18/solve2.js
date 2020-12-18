@@ -7,9 +7,18 @@ function parse(inputString) {
   return inputString.split('\n');
 }
 
+function add(a, b) {
+  return parseInt(a, 10) + parseInt(b, 10);
+}
+
+function multiply(a, b) {
+  return parseInt(a, 10) * parseInt(b, 10);
+}
+
 function solveEquation(equation) {
   const parensReg = /\(([0-9\*\+ ]+?)\)/;
-  const additionReg = /\d+ \+ \d+/;
+  const additionReg = /(\d+) \+ (\d+)/;
+  const multiplicationReg = /(\d+) \* (\d+)/;
 
   let match;
   let simplified = equation;
@@ -18,38 +27,20 @@ function solveEquation(equation) {
     simplified = simplified.replace(match[0], solveEquation(match[1]));
   }
 
-  if (simplified.indexOf('*') > -1) {
-    while ((match = simplified.match(additionReg))) {
-      simplified = simplified.replace(match[0], solveEquation(match[0]));
-    }
+  while ((match = simplified.match(additionReg))) {
+    simplified = simplified.replace(match[0], add(match[1], match[2]));
   }
 
-  const tokens = simplified.split(' ');
-  let value = 0;
-  let oper = null;
-  while (tokens.length) {
-    const token = tokens.shift();
-    if (token === '+' || token === '*') {
-      oper = token;
-    } else {
-      const num = parseInt(token, 10);
-      if (oper === '+') {
-        value += num;
-      } else if (oper === '*') {
-        value *= num;
-      } else {
-        value = num;
-      }
-    }
+  while ((match = simplified.match(multiplicationReg))) {
+    simplified = simplified.replace(match[0], multiply(match[1], match[2]));
   }
 
-  return value;
+  return parseInt(simplified, 10);
 }
 
 function solve(inputString) {
   const parsed = parse(inputString);
   const solved = parsed.map(solveEquation);
-  console.log('solved', solved);
   const sum = solved.reduce((a, b) => (a += b), 0);
 
   return sum;
