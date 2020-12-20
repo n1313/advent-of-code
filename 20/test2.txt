@@ -1,0 +1,44 @@
+Tile A:
+abc
+hij
+opq
+
+Tile B:
+cde
+jkl
+qrs
+
+Tile C:
+efg
+lmn
+stu
+
+Tile D:
+qpo
+xwv
+EDC
+
+Tile E:
+qrs
+xyz
+EFG
+
+Tile F:
+stu
+zAB
+GHI
+
+Tile G:
+CDE
+JKL
+QRS
+
+Tile H:
+EFG
+LMN
+STU
+
+Tile I:
+GHI
+NOP
+UVW
