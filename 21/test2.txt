@@ -1,0 +1,3 @@
+i1 i2 a1 (contains allergen1)
+i2 i3 a2 (contains allergen2)
+i4 a1 a2 (contains allergen1, allergen2)
