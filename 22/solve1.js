@@ -20,11 +20,9 @@ function solve(inputString) {
     const card2 = deck2.shift();
 
     if (card1 > card2) {
-      deck1.push(card1);
-      deck1.push(card2);
+      deck1.push(card1, card2);
     } else {
-      deck2.push(card2);
-      deck2.push(card1);
+      deck2.push(card2, card1);
     }
   }
 
