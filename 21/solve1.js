@@ -39,14 +39,10 @@ function solve(inputString) {
   const solvedAllergens = {};
   let unsolvedAllergens = allergensMap;
 
-  console.log('ingredientsMap', ingredientsMap);
-  console.log('allergensMap', allergensMap);
-
   while (Object.keys(solvedAllergens).length < uniqueAllergens.length) {
     let candidateIngredient;
 
     const candidateAllergen = Object.entries(unsolvedAllergens).find(([allergen, ingredients]) => {
-      console.log('>>> allergen', allergen);
       const max = Math.max(...Object.values(ingredients));
       const maxIngredient = Object.entries(ingredients).filter(([i, v]) => v === max);
       if (maxIngredient.length === 1) {
@@ -54,8 +50,6 @@ function solve(inputString) {
         return true;
       }
     })[0];
-
-    console.log('candidate', candidateAllergen, 'in', candidateIngredient);
 
     solvedAllergens[candidateAllergen] = candidateIngredient;
 
@@ -65,50 +59,10 @@ function solve(inputString) {
         delete i[candidateIngredient];
       }
     });
-
-    console.log('unsolvedAllergens', unsolvedAllergens);
   }
-
-  console.log('solvedAllergens', solvedAllergens);
 
   const knownAllergens = Object.values(solvedAllergens);
   const notAllergens = Object.keys(ingredientsMap).filter((i) => knownAllergens.indexOf(i) === -1);
-
-  /*
-  const solvedIngredients = {};
-  let unsolvedIngredients = ingredientsMap;
-
-  while (Object.keys(solvedIngredients).length < uniqueAllergens.length) {
-
-    let candidateAllergen;
-
-    const candidateIngredient = Object.entries(unsolvedIngredients).find(([ingredient, allergens]) => {
-      const max = Math.max(...Object.values(allergens));
-      const maxAllergen = Object.entries(allergens).filter(([a, v]) => v === max);
-      if (maxAllergen.length === 1) {
-        candidateAllergen = maxAllergen[0][0];
-        return true;
-      }
-    })[0];
-
-    console.log('candidate', candidateAllergen, 'in', candidateIngredient);
-
-    solvedIngredients[candidateIngredient] = candidateAllergen;
-
-    delete unsolvedIngredients[candidateIngredient];
-    Object.entries(unsolvedIngredients).forEach(([i, a]) => {
-      if (a[candidateAllergen]) {
-        delete a[candidateAllergen];
-      }
-    });
-
-    console.log('unsolvedIngredients', unsolvedIngredients);
-  }
-
-  console.log('solvedIngredients', solvedIngredients);
-
-  const notAllergens = Object.keys(unsolvedIngredients);
-  */
 
   const result = notAllergens.reduce((sum, ing) => sum + ingredientsCounts[ing], 0);
 

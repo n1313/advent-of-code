@@ -39,14 +39,10 @@ function solve(inputString) {
   const solvedAllergens = {};
   let unsolvedAllergens = allergensMap;
 
-  console.log('ingredientsMap', ingredientsMap);
-  console.log('allergensMap', allergensMap);
-
   while (Object.keys(solvedAllergens).length < uniqueAllergens.length) {
     let candidateIngredient;
 
     const candidateAllergen = Object.entries(unsolvedAllergens).find(([allergen, ingredients]) => {
-      console.log('>>> allergen', allergen);
       const max = Math.max(...Object.values(ingredients));
       const maxIngredient = Object.entries(ingredients).filter(([i, v]) => v === max);
       if (maxIngredient.length === 1) {
@@ -54,8 +50,6 @@ function solve(inputString) {
         return true;
       }
     })[0];
-
-    console.log('candidate', candidateAllergen, 'in', candidateIngredient);
 
     solvedAllergens[candidateAllergen] = candidateIngredient;
 
@@ -65,11 +59,7 @@ function solve(inputString) {
         delete i[candidateIngredient];
       }
     });
-
-    console.log('unsolvedAllergens', unsolvedAllergens);
   }
-
-  console.log('solvedAllergens', solvedAllergens);
 
   const sortedAllergens = Object.keys(solvedAllergens).sort();
 
