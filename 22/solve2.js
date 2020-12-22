@@ -19,19 +19,22 @@ function isHighestCardInDeck1(deck1, deck2) {
 }
 
 function game(deck1, deck2) {
-  const gameConfigurations = {};
+  const configs1 = [];
+  const configs2 = [];
 
   if (isHighestCardInDeck1(deck1, deck2)) {
     return [1, deck1];
   }
 
   while (deck1.length > 0 && deck2.length > 0) {
-    const configuration = [deck1.join('-'), deck2.join('-')].join(':');
+    const config1 = deck1.reduce((a, card, i) => (a += card * card * (i + 1)), 1);
+    const config2 = deck2.reduce((a, card, i) => (a += card * card * (i + 1)), 1);
 
-    if (gameConfigurations[configuration]) {
+    if (configs1.indexOf(config1) > -1 && configs2.indexOf(config2) > -1) {
       return [1, deck1];
     } else {
-      gameConfigurations[configuration] = true;
+      configs1.push(config1);
+      configs2.push(config2);
     }
 
     let roundWinner;
