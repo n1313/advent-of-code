@@ -11,11 +11,10 @@ function solve(inputString) {
 
   const input = inputString.split('').map((x) => parseInt(x, 10));
   let curr;
-
   for (let i = 1; i <= cups; i++) {
     curr = input[i - 1] || i;
     const next = input[i] || i + 1;
-    list[curr] = { value: curr, next, i };
+    list[curr] = { value: curr, next };
   }
   list[curr].next = input[0];
 
@@ -52,8 +51,7 @@ function solve(inputString) {
     currentValue = list[currentValue].next;
   }
 
-  const one = list[1];
-  const next1 = list[one.next];
+  const next1 = list[list[1].next];
   const next2 = list[next1.next];
 
   const result = next1.value * next2.value;
