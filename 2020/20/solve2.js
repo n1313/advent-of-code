@@ -1,8 +1,8 @@
 const fs = require('fs');
 const inputString = fs.readFileSync(process.argv[2], 'utf-8').trim();
 
-const rotateArrayRight = require('../utils/rotateArrayRight');
-const flipArrayHorizontally = require('../utils/flipArrayHorizontally');
+const rotateArrayRight = require('../../utils/rotateArrayRight');
+const flipArrayHorizontally = require('../../utils/flipArrayHorizontally');
 
 main(inputString);
 
