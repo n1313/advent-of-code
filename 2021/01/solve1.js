@@ -5,14 +5,10 @@ main(inputString);
 
 function solve(lines) {
   let result = 0;
-  let prev = parseInt(lines[0]);
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = parseInt(lines[i]);
-    if (line > prev) {
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (parseInt(lines[i + 1]) > parseInt(lines[i])) {
       result += 1;
     }
-    prev = line;
   }
 
   return result;
