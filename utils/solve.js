@@ -17,7 +17,8 @@ module.exports = function solve(solver, testString, expectedResult, inputFilenam
 
   const start = new Date();
   const result = solver(actualInput);
+  const end = new Date();
 
   console.log(result);
-  console.log('Took', new Date() - start, 'ms');
+  console.log('Took', end - start, 'ms');
 };
