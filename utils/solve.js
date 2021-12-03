@@ -1,8 +1,6 @@
 const fs = require('fs');
 
 module.exports = function solve(solver, testString, expectedResult, inputFilename = process.argv[2], split = true) {
-  const start = new Date();
-
   if (!inputFilename) {
     throw new Error('You forgot input!');
   }
@@ -17,6 +15,7 @@ module.exports = function solve(solver, testString, expectedResult, inputFilenam
     throw new Error(`Unexpected result: ${testResult}`);
   }
 
+  const start = new Date();
   const result = solver(actualInput);
 
   console.log(result);
