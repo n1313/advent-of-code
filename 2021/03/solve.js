@@ -1,55 +1,29 @@
 const solve = require('../../utils/solve');
 
-const getMostCommonBit = (lines, position) => {
-  let ones = 0;
-  let zeroes = 0;
-
-  lines.forEach((l) => {
-    const b = l[position];
-    if (b === '0') {
-      zeroes += 1;
-    } else {
-      ones += 1;
-    }
-  });
-
-  if (ones > zeroes) {
-    return '1';
-  } else if (zeroes > ones) {
-    return '0';
-  } else {
-    return '!';
-  }
-};
-
 const solver1 = (lines) => {
-  const map = {};
+  const map = [];
+  const width = lines[0].length;
+
+  for (let i = 0; i < width; i++) {
+    map[i] = [0, 0];
+  }
 
   lines.forEach((l) => {
-    const bits = l.split('');
-    bits.forEach((b, i) => {
-      if (!map[i]) {
-        map[i] = {
-          0: 0,
-          1: 0,
-        };
-      }
-      map[i][b] += 1;
-    });
+    for (let i = 0; i < width; i++) {
+      map[i][l[i]] += 1;
+    }
   });
 
   let gammaBin = '';
   let epsilonBin = '';
 
-  Object.entries(map).forEach(([k, v]) => {
-    if (v['0'] > v['1']) {
+  map.forEach((i) => {
+    if (i[0] > i[1]) {
       gammaBin += '0';
       epsilonBin += '1';
-      map[k].larger = '0';
     } else {
       gammaBin += '1';
       epsilonBin += '0';
-      map[k].larger = '1';
     }
   });
 
@@ -59,6 +33,22 @@ const solver1 = (lines) => {
   return gamma * epsilon;
 };
 
+const getMostCommonBit = (lines, position) => {
+  let ones = 0;
+
+  lines.forEach((l) => {
+    if (l[position] === '1') {
+      ones += 1;
+    }
+  });
+
+  if (ones >= lines.length / 2) {
+    return '1';
+  } else {
+    return '0';
+  }
+};
+
 const solver2 = (lines) => {
   let oxygenCandidates = [...lines];
   let co2Candidates = [...lines];
@@ -66,20 +56,15 @@ const solver2 = (lines) => {
   let i = 0;
 
   while (oxygenCandidates.length > 1) {
-    let mostCommonBit = getMostCommonBit(oxygenCandidates, i);
-    if (mostCommonBit === '!') {
-      mostCommonBit = '1';
-    }
+    const mostCommonBit = getMostCommonBit(oxygenCandidates, i);
     oxygenCandidates = oxygenCandidates.filter((c) => c[i] === mostCommonBit);
     i += 1;
   }
 
   i = 0;
+
   while (co2Candidates.length > 1) {
-    let mostCommonBit = getMostCommonBit(co2Candidates, i);
-    if (mostCommonBit === '!') {
-      mostCommonBit = '1';
-    }
+    const mostCommonBit = getMostCommonBit(co2Candidates, i);
     co2Candidates = co2Candidates.filter((c) => c[i] !== mostCommonBit);
     i += 1;
   }
