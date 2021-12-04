@@ -11,5 +11,9 @@ module.exports = function rotateArrayRight(array) {
     }
   }
 
-  return rotated.map((row) => row.join(''));
+  if (typeof array[0] === 'string') {
+    return rotated.map((row) => row.join(''));
+  }
+
+  return rotated;
 };
