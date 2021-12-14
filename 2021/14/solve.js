@@ -30,14 +30,14 @@ const solver = (lines, steps) => {
 
   const letters = {};
   Object.entries(templatePairs).forEach(([pair, count]) => {
-    letters[pair[0]] = letters[pair[0]] ? BigInt(letters[pair[0]]) + BigInt(count) : BigInt(count);
+    letters[pair[0]] = letters[pair[0]] ? letters[pair[0]] + count : count;
   });
 
   const lastLetter = template[template.length - 1];
-  letters[lastLetter] = letters[lastLetter] + 1n;
+  letters[lastLetter] = letters[lastLetter] + 1;
 
-  let min = BigInt(Number.MAX_SAFE_INTEGER);
-  let max = 0n;
+  let min = Number.MAX_SAFE_INTEGER;
+  let max = 0;
   Object.values(letters).forEach((v) => {
     if (min > v) {
       min = v;
@@ -77,8 +77,8 @@ BC -> B
 CC -> N
 CN -> C`;
 
-const expectedResult1 = 1588n;
-const expectedResult2 = 2188189693529n;
+const expectedResult1 = 1588;
+const expectedResult2 = 2188189693529;
 
 solve(solver1, testInput, expectedResult1);
 solve(solver2, testInput, expectedResult2);
