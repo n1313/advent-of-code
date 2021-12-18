@@ -1,7 +1,10 @@
 const solve = require('../../utils/solve');
 
+let id = 0;
+
 const createNumber = (n, parent = null, level = 0) => {
   const number = {
+    id: id++,
     level,
     parent,
   };
@@ -10,7 +13,7 @@ const createNumber = (n, parent = null, level = 0) => {
     number.right = createNumber(n[1], number, level + 1);
   } else {
     number.value = n;
-    number.regular = true;
+    number.isRegular = true;
   }
   return number;
 };
@@ -45,14 +48,69 @@ const add = (left, right) => {
   return number;
 };
 
+const findUp = (number, direction) => {
+  if (!number.parent) {
+    return null;
+  } else if (number.parent[direction].isRegular) {
+    return number.parent;
+  } else if (number.parent[direction] === number) {
+    return findUp(number.parent, direction);
+  } else {
+    return findDown(number.parent, direction === 'left' ? 'right' : 'left');
+  }
+};
+
+const findDown = (number, direction) => {
+  if (number[direction].isRegular) {
+    return number;
+  } else {
+    return findDown(number[direction], direction);
+  }
+};
+
+const explode = (number) => {
+  if (number.isRegular) {
+    return false;
+  }
+  if (number.level >= 4) {
+    console.log('explode', number);
+    const leftNode = findUp(number, 'left');
+    if (leftNode) {
+      if (leftNode.level >= number.level) {
+        leftNode.right += number.left;
+      } else {
+        leftNode.left += number.left;
+      }
+    }
+    const rightNode = findUp(number, 'right');
+    if (rightNode) {
+      if (rightNode.level >= number.level) {
+        rightNode.left += number.right;
+      } else {
+        rightNode.right += number.right;
+      }
+    }
+    number.value = 0;
+    number.isRegular = true;
+    delete number.left;
+    delete number.right;
+    return true;
+  } else {
+    return explode(number.left) || explode(number.right);
+  }
+};
+
 const split = (number) => {};
 
-const explode = (number) => {};
-
 const reduce = (number) => {
-  let reducedNumber = number;
+  while (explode(number)) {
+    // ?!!
+  }
+  // while (split(number)) {
+  //   // ???
+  // }
 
-  return reducedNumber;
+  return number;
 };
 
 const solver1 = (lines) => {
@@ -61,6 +119,8 @@ const solver1 = (lines) => {
   let newNumber = numbers[0];
 
   console.log('', newNumber);
+
+  reduce(newNumber);
 
   /*
   for (let n = 1; n < numbers.length; n++) {
@@ -75,6 +135,8 @@ const solver1 = (lines) => {
 
 const solver2 = (lines) => {};
 
+const testInput1 = `[[[[[9,8],1],2],3],4]`;
+/*
 const testInput1 = `[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[[5,[2,8]],4],[5,[[9,9],0]]]
 [6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
@@ -85,6 +147,8 @@ const testInput1 = `[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[9,3],[[9,9],[6,[4,9]]]]
 [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
 [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]`;
+*/
+
 const expectedResult1 = 4140;
 const expectedResult2 = 112;
 
