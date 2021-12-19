@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-module.exports = function solve(solver, testString, expectedResult, inputFilename = process.argv[2], split = true) {
+module.exports = function solve(solver, testString, expectedResult, split = true, inputFilename = process.argv[2]) {
   if (!inputFilename) {
     throw new Error('You forgot input!');
   }
