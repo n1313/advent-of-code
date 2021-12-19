@@ -23,18 +23,35 @@ const parse = (lines) => {
 };
 
 const toArray = (number) => {
-  if (typeof number === 'object') {
-    return [toArray(number.left), toArray(number.right)];
+  if (number.isRegular) {
+    return number.value;
   } else {
-    return number;
+    return [toArray(number.left), toArray(number.right)];
+  }
+};
+
+const debug = (number) => {
+  const pad = ''.padStart(number.level, ' ');
+  if (number.isRegular) {
+    console.log(pad, '*', number.id, '=', number.value);
+  }
+  if (number.left) {
+    console.log(pad, number.id, 'left =', number.left.id);
+    debug(number.left);
+  }
+  if (number.right) {
+    console.log(pad, number.id, 'right =', number.right.id);
+    debug(number.right);
   }
 };
 
 const nest = (number, parent) => {
   number.parent = parent;
   number.level += 1;
-  number.left = nest(number.left, number);
-  number.right = nest(number.right, number);
+  if (!number.isRegular) {
+    number.left = nest(number.left, number);
+    number.right = nest(number.right, number);
+  }
   return number;
 };
 
@@ -42,25 +59,33 @@ const add = (left, right) => {
   const number = {
     level: 0,
     parent: null,
+    id: id++,
   };
   number.left = nest(left, number);
   number.right = nest(right, number);
+  // console.log('a', JSON.stringify(toArray(number)));
   return number;
 };
 
 const findUp = (number, direction) => {
-  if (!number.parent) {
+  // console.log('findUp', number.id, direction);
+  const parent = number.parent;
+  if (!parent) {
     return null;
-  } else if (number.parent[direction].isRegular) {
-    return number.parent;
-  } else if (number.parent[direction] === number) {
-    return findUp(number.parent, direction);
+  } else if (parent[direction] === number) {
+    return findUp(parent, direction);
+  } else if (!parent[direction].isRegular) {
+    const oppositeDirection = direction === 'left' ? 'right' : 'left';
+    return findDown(parent[direction], oppositeDirection);
+  } else if (parent[direction].isRegular) {
+    return parent;
   } else {
-    return findDown(number.parent, direction === 'left' ? 'right' : 'left');
+    throw new Error('wtf');
   }
 };
 
 const findDown = (number, direction) => {
+  // console.log('findDown', number.id, direction);
   if (number[direction].isRegular) {
     return number;
   } else {
@@ -73,21 +98,25 @@ const explode = (number) => {
     return false;
   }
   if (number.level >= 4) {
-    console.log('explode', number);
+    // console.log('  explode', number.id);
     const leftNode = findUp(number, 'left');
     if (leftNode) {
-      if (leftNode.level >= number.level) {
-        leftNode.right += number.left;
+      if (leftNode.right.isRegular) {
+        leftNode.right.value += number.left.value;
+        // console.log('     left', leftNode.right.id, leftNode.left.value);
       } else {
-        leftNode.left += number.left;
+        leftNode.left.value += number.left.value;
+        // console.log('     left', leftNode.left.id, leftNode.left.value);
       }
     }
     const rightNode = findUp(number, 'right');
     if (rightNode) {
-      if (rightNode.level >= number.level) {
-        rightNode.left += number.right;
+      if (rightNode.left.isRegular) {
+        rightNode.left.value += number.right.value;
+        // console.log('    right', rightNode.left.id, rightNode.left.value);
       } else {
-        rightNode.right += number.right;
+        rightNode.right.value += number.right.value;
+        // console.log('    right', rightNode.right.id, rightNode.right.value);
       }
     }
     number.value = 0;
@@ -100,43 +129,73 @@ const explode = (number) => {
   }
 };
 
-const split = (number) => {};
+const split = (number) => {
+  if (number.isRegular) {
+    if (number.value >= 10) {
+      number.left = createNumber(Math.floor(number.value / 2), number, number.level + 1);
+      number.right = createNumber(Math.ceil(number.value / 2), number, number.level + 1);
+      delete number.isRegular;
+      delete number.value;
+      return true;
+    }
+    return false;
+  } else {
+    return split(number.left) || split(number.right);
+  }
+};
 
 const reduce = (number) => {
-  while (explode(number)) {
-    // ?!!
+  while (explode(number) || split(number)) {
+    // ??!
+    // console.log('r', JSON.stringify(toArray(number)));
   }
-  // while (split(number)) {
-  //   // ???
-  // }
 
   return number;
+};
+
+const magnitude = (number) => {
+  if (number.isRegular) {
+    return number.value;
+  } else {
+    return 3 * magnitude(number.left) + 2 * magnitude(number.right);
+  }
 };
 
 const solver1 = (lines) => {
   const numbers = parse(lines);
 
-  let newNumber = numbers[0];
+  let accumulator = numbers[0];
 
-  console.log('', newNumber);
-
-  reduce(newNumber);
-
-  /*
   for (let n = 1; n < numbers.length; n++) {
-    newNumber = add(newNumber, numbers[n]);
-    console.log(debug(newNumber), '+', debug(numbers[n]), '=', debug(newNumber));
-    newNumber = reduce(newNumber);
+    const newNumber = add(accumulator, numbers[n]);
+    reduce(newNumber);
+    accumulator = newNumber;
   }
 
-  console.log('newNumber', newNumber);
-  */
+  return magnitude(accumulator);
 };
 
-const solver2 = (lines) => {};
+const solver2 = (lines) => {
+  let maxMag = 0;
 
-const testInput1 = `[[[[[9,8],1],2],3],4]`;
-/*
+  for (let n = 0; n < lines.length; n++) {
+    for (let m = 0; m < lines.length; m++) {
+      const n1 = createNumber(JSON.parse(lines[n]));
+      const n2 = createNumber(JSON.parse(lines[m]));
+      console.log('n, n1', n, JSON.stringify(toArray(n1)));
+      console.log('n, n2', n, JSON.stringify(toArray(n2)));
+      const newNumber = add(n1, n2);
+      reduce(newNumber);
+      console.log(JSON.stringify(toArray(newNumber)));
+      const mag = magnitude(newNumber);
+      console.log(n, '+', m, '=', mag);
+      maxMag = Math.max(maxMag, mag);
+    }
+  }
+
+  return maxMag;
+};
+
 const testInput1 = `[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[[5,[2,8]],4],[5,[[9,9],0]]]
 [6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
@@ -147,10 +206,9 @@ const testInput1 = `[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[9,3],[[9,9],[6,[4,9]]]]
 [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
 [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]`;
-*/
 
 const expectedResult1 = 4140;
-const expectedResult2 = 112;
+const expectedResult2 = 3993;
 
 solve(solver1, testInput1, expectedResult1);
-// solve(solver2, testInput1, expectedResult2);
+solve(solver2, testInput1, expectedResult2);
